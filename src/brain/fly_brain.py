@@ -6,7 +6,7 @@ from src.config import HIDDEN_SIZE, NEURAL_TICKS
 
 class FlyBrain(nn.Module):
 
-    def __init__(self, input_size=11, output_size=4):
+    def __init__(self, input_size=14, output_size=4):
         super().__init__()
 
         self.input_layer = nn.Linear(input_size, HIDDEN_SIZE)

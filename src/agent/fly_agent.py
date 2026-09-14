@@ -4,19 +4,6 @@ import random
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-from src.config import (
-  BATCH_SIZE,
-  CHECKPOINT_PATH,
-  DEVICE,
-  EPSILON_DECAY,
-  EPSILON_END,
-  EPSILON_START,
-  GAMMA,
-  LEARNING_RATE,
-  MODEL_PATH,
-  TARGET_UPDATE,
-)
-
 from src.brain.fly_brain import FlyBrain
 
 from src.config import (
@@ -29,6 +16,7 @@ from src.config import (
   GAMMA,
   LEARNING_RATE,
   TARGET_UPDATE,
+  MODEL_PATH,
 )
 from src.rl.replay_memory import ReplayMemory
 

@@ -3,6 +3,7 @@ import random
 import numpy as np
 
 from src.config import GRID_SIZE, MAX_STEPS
+from collections import deque
 
 
 class SnakeGame:
@@ -93,22 +94,31 @@ class SnakeGame:
         food_up = float(food_y < head_y)
         food_down = float(food_y > head_y)
 
-        return np.array(
-            [
-                danger_straight,
-                danger_right,
-                danger_left,
-                direction_up,
-                direction_down,
-                direction_left,
-                direction_right,
-                food_left,
-                food_right,
-                food_up,
-                food_down,
-            ],
-            dtype=np.float32,
-        )
+        straight_space = self._space_after_move(self.direction)
+        left_space = self._space_after_move(left_direction)
+        right_space = self._space_after_move(right_direction)
+
+        max_space = GRID_SIZE * GRID_SIZE
+
+        return np.array([
+            danger_straight,
+            danger_right,
+            danger_left,
+
+            direction_up,
+            direction_down,
+            direction_left,
+            direction_right,
+
+            food_left,
+            food_right,
+            food_up,
+            food_down,
+
+            straight_space / max_space,
+            right_space / max_space,
+            left_space / max_space,
+        ], dtype=np.float32)
 
     def step(self, action):
         previous_distance = self._food_distance()
@@ -199,3 +209,43 @@ class SnakeGame:
                 25,
             ),
         )
+
+    def _reachable_space(self, start):
+        if self._is_collision(start):
+            return 0
+
+        visited = {start}
+        queue = deque([start])
+
+        while queue:
+            x, y = queue.popleft()
+
+            for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
+                next_position = (x + dx, y + dy)
+
+                if (
+                    next_position not in visited
+                    and not self._is_collision(next_position)
+                ):
+                    visited.add(next_position)
+                    queue.append(next_position)
+
+        return len(visited)
+
+    def _space_after_move(self, direction):
+        head_x, head_y = self.snake[0]
+        dx, dy = direction
+
+        new_head = (head_x + dx, head_y + dy)
+
+        if self._is_collision(new_head):
+            return 0
+
+        old_head = self.snake[0]
+        self.snake.insert(0, new_head)
+
+        space = self._reachable_space(new_head)
+
+        self.snake.pop(0)
+
+        return space

@@ -40,7 +40,7 @@ During training, the agent uses an epsilon-greedy policy to balance exploration 
 The current model is intentionally small:
 
 ```text
-Input:  11
+Input:  14
 Hidden: 64
 Output: 4
 ```
