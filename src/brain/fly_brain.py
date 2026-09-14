@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from config import HIDDEN_SIZE, NEURAL_TICKS
+from src.config import HIDDEN_SIZE, NEURAL_TICKS
 
 
 class FlyBrain(nn.Module):

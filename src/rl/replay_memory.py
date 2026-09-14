@@ -3,7 +3,7 @@ from collections import deque
 
 import numpy as np
 
-from config import MEMORY_SIZE
+from src.config import MEMORY_SIZE
 
 
 class ReplayMemory:

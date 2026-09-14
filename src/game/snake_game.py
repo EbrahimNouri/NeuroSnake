@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 
-from config import GRID_SIZE
+from src.config import GRID_SIZE
 
 
 class SnakeGame:
