@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 
-from src.config import GRID_SIZE
+from src.config import GRID_SIZE, MAX_STEPS
 
 
 class SnakeGame:
@@ -161,7 +161,7 @@ class SnakeGame:
             else:
                 reward -= 0.10
 
-        if self.steps >= 500:
+        if self.steps >= MAX_STEPS:
             return self.get_observation(), reward, True
 
         return self.get_observation(), reward, False
