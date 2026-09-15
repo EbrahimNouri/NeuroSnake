@@ -41,7 +41,8 @@ The current model is intentionally small:
 
 ```text
 Input:  14
-Hidden: 96
+Hidden: 128
+Hidden: 128
 Output: 4
 ```
 
@@ -148,7 +149,7 @@ For example:
 EPISODES = 10000
 MAX_STEPS = 5000
 BATCH_SIZE = 128
-HIDDEN_SIZE = 64
+HIDDEN_SIZE = 128
 NEURAL_TICKS = 6
 ```
 
