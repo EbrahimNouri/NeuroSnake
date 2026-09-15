@@ -5,7 +5,7 @@ import pygame
 import torch
 
 from src.agent.fly_agent import FlyAgent
-from src.config import (
+from src.config.config import (
     CELL_SIZE,
     DEVICE,
     EPISODES,
@@ -15,12 +15,15 @@ from src.config import (
     PRINT_EVERY,
     SPEED_PLAY,
 )
+from src.config.logger import Logger
 from src.game.snake_game import SnakeGame
 
 
 class Trainer:
 
     def __init__(self, load_checkpoint=True):
+        self.logger = Logger()
+
         self.game = SnakeGame()
         self.agent = FlyAgent()
 
@@ -37,18 +40,20 @@ class Trainer:
             self.start_episode = episode + 1
             self.best_score = best_score
 
-            print(
+            self.logger.log(
                 f"Checkpoint loaded. "
                 f"Continuing from episode {self.start_episode}"
             )
         else:
-            print("Starting training from scratch.")
+            self.logger.log(
+                "Starting training from scratch."
+            )
 
     def train(self):
         scores = []
 
         if self.start_episode > EPISODES:
-            print(
+            self.logger.log(
                 f"Training already reached episode "
                 f"{self.start_episode - 1}."
             )
@@ -109,15 +114,15 @@ class Trainer:
                     else 0.0
                 )
 
-                print(
-                    f"Episode {episode} | "
-                    f"Score {score} | "
-                    f"Avg {average_score:.2f} | "
-                    f"Best {self.best_score} | "
-                    f"Reward {total_reward:.2f} | "
-                    f"Loss {average_loss:.4f} | "
-                    f"Epsilon {self.agent.epsilon:.4f} | "
-                    f"Steps {self.game.steps}"
+                self.logger.episode(
+                    episode=episode,
+                    score=score,
+                    avg_score=average_score,
+                    best_score=self.best_score,
+                    reward=total_reward,
+                    loss=average_loss,
+                    epsilon=self.agent.epsilon,
+                    steps=self.game.steps,
                 )
 
                 self.agent.save_checkpoint(
@@ -132,7 +137,7 @@ class Trainer:
 
         self._save_model()
 
-        print(
+        self.logger.log(
             f"Training finished. "
             f"Best score: {self.best_score}"
         )
@@ -150,13 +155,13 @@ class Trainer:
             MODEL_PATH,
         )
 
-        print(
+        self.logger.log(
             f"Model saved to: {MODEL_PATH}"
         )
 
     def play(self):
         if not self.agent.load_model():
-            print(
+            self.logger.log(
                 f"Model not found: {MODEL_PATH}"
             )
             return
@@ -177,6 +182,8 @@ class Trainer:
         clock = pygame.time.Clock()
 
         state = self.game.reset()
+
+        self.logger.log("Play mode started.")
 
         running = True
 
@@ -226,7 +233,7 @@ class Trainer:
             pygame.display.flip()
 
             if done:
-                print(
+                self.logger.log(
                     f"Game over | "
                     f"Score: {self.game.score}"
                 )
@@ -236,4 +243,6 @@ class Trainer:
             clock.tick(SPEED_PLAY)
 
         pygame.quit()
+
+        self.logger.log("Play mode stopped.")
 

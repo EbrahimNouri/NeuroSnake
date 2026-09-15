@@ -4,7 +4,7 @@ import numpy as np
 
 from collections import deque
 
-from src.config import GRID_SIZE, MAX_STEPS, LOOKAHEAD_STEPS
+from src.config.config import GRID_SIZE, MAX_STEPS, LOOKAHEAD_STEPS
 
 
 class SnakeGame:
