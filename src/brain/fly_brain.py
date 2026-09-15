@@ -19,29 +19,29 @@ class FlyBrain(nn.Module):
         self.membrane_decay = 0.85
 
     def forward(self, x):
+        batch_size = x.size(0)
+
         voltage = torch.zeros(
-            x.size(0),
+            batch_size,
             HIDDEN_SIZE,
             device=x.device,
         )
 
         spike_sum = torch.zeros_like(voltage)
 
+        input_current = self.input_layer(x)
+
         for _ in range(self.neural_ticks):
-            current = self.input_layer(x)
-            current = current + self.hidden_layer1(voltage)
-            current = self.hidden_layer2(current)
+            current = input_current + self.hidden_layer1(voltage)
 
-            voltage = (
-                voltage * self.membrane_decay
-                + current
-            )
+            voltage = voltage * self.membrane_decay + current
 
-            spike = torch.sigmoid(
-                2.0 * (voltage - self.threshold)
-            )
+            current = self.hidden_layer2(voltage)
+            voltage = voltage * self.membrane_decay + current
 
-            voltage = voltage * (1.0 - spike)
+            spike = torch.sigmoid(2.0 * (voltage - self.threshold))
+
+            voltage = voltage - spike * self.threshold
 
             spike_sum += spike
 
