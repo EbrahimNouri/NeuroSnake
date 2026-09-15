@@ -2,8 +2,9 @@ import random
 
 import numpy as np
 
-from src.config import GRID_SIZE, MAX_STEPS
 from collections import deque
+
+from src.config import GRID_SIZE, MAX_STEPS, LOOKAHEAD_STEPS
 
 
 class SnakeGame:
@@ -94,13 +95,13 @@ class SnakeGame:
         food_up = float(food_y < head_y)
         food_down = float(food_y > head_y)
 
-        straight_space = self._space_after_move(self.direction)
-        left_space = self._space_after_move(left_direction)
-        right_space = self._space_after_move(right_direction)
+        straight_spaces = self._lookahead_spaces(self.direction)
+        right_spaces = self._lookahead_spaces(right_direction)
+        left_spaces = self._lookahead_spaces(left_direction)
 
         max_space = GRID_SIZE * GRID_SIZE
 
-        return np.array([
+        observation = [
             danger_straight,
             danger_right,
             danger_left,
@@ -114,11 +115,18 @@ class SnakeGame:
             food_right,
             food_up,
             food_down,
+        ]
 
-            straight_space / max_space,
-            right_space / max_space,
-            left_space / max_space,
-        ], dtype=np.float32)
+        for space in straight_spaces:
+            observation.append(space / max_space)
+
+        for space in right_spaces:
+            observation.append(space / max_space)
+
+        for space in left_spaces:
+            observation.append(space / max_space)
+
+        return np.array(observation, dtype=np.float32)
 
     def step(self, action):
         previous_distance = self._food_distance()
@@ -211,8 +219,16 @@ class SnakeGame:
         )
 
     def _reachable_space(self, start):
-        if self._is_collision(start):
+        x, y = start
+
+        if x < 0 or x >= GRID_SIZE:
             return 0
+
+        if y < 0 or y >= GRID_SIZE:
+            return 0
+
+        blocked = set(self.snake)
+        blocked.discard(start)
 
         visited = {start}
         queue = deque([start])
@@ -220,32 +236,68 @@ class SnakeGame:
         while queue:
             x, y = queue.popleft()
 
-            for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
-                next_position = (x + dx, y + dy)
+            for dx, dy in (
+                (0, -1),
+                (0, 1),
+                (-1, 0),
+                (1, 0),
+            ):
+                next_position = (
+                    x + dx,
+                    y + dy,
+                )
+
+                nx, ny = next_position
 
                 if (
-                    next_position not in visited
-                    and not self._is_collision(next_position)
+                    0 <= nx < GRID_SIZE
+                    and 0 <= ny < GRID_SIZE
+                    and next_position not in visited
+                    and next_position not in blocked
                 ):
                     visited.add(next_position)
                     queue.append(next_position)
 
         return len(visited)
 
-    def _space_after_move(self, direction):
-        head_x, head_y = self.snake[0]
-        dx, dy = direction
+    def _lookahead_spaces(self, direction):
+        simulated_snake = list(self.snake)
+        spaces = []
 
-        new_head = (head_x + dx, head_y + dy)
+        for _ in range(LOOKAHEAD_STEPS):
+            head_x, head_y = simulated_snake[0]
+            dx, dy = direction
 
-        if self._is_collision(new_head):
-            return 0
+            new_head = (
+                head_x + dx,
+                head_y + dy,
+            )
 
-        old_head = self.snake[0]
-        self.snake.insert(0, new_head)
+            x, y = new_head
 
-        space = self._reachable_space(new_head)
+            if (
+                x < 0
+                or x >= GRID_SIZE
+                or y < 0
+                or y >= GRID_SIZE
+                or new_head in simulated_snake
+            ):
+                spaces.extend(
+                    [0] * (LOOKAHEAD_STEPS - len(spaces))
+                )
+                break
 
-        self.snake.pop(0)
+            simulated_snake.insert(0, new_head)
 
-        return space
+            simulated_snake.pop()
+
+            old_snake = self.snake
+            self.snake = simulated_snake
+
+            space = self._reachable_space(new_head)
+
+            self.snake = old_snake
+
+            spaces.append(space)
+
+        return spaces

@@ -13,6 +13,7 @@ from src.config import (
     MAX_STEPS,
     MODEL_PATH,
     PRINT_EVERY,
+    SPEED_PLAY,
 )
 from src.game.snake_game import SnakeGame
 
@@ -115,7 +116,8 @@ class Trainer:
                     f"Best {self.best_score} | "
                     f"Reward {total_reward:.2f} | "
                     f"Loss {average_loss:.4f} | "
-                    f"Epsilon {self.agent.epsilon:.4f}"
+                    f"Epsilon {self.agent.epsilon:.4f} | "
+                    f"Steps {self.game.steps}"
                 )
 
                 self.agent.save_checkpoint(
@@ -231,7 +233,7 @@ class Trainer:
 
                 state = self.game.reset()
 
-            clock.tick(10)
+            clock.tick(SPEED_PLAY)
 
         pygame.quit()
 

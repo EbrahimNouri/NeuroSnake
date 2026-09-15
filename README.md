@@ -41,7 +41,7 @@ The current model is intentionally small:
 
 ```text
 Input:  14
-Hidden: 64
+Hidden: 96
 Output: 4
 ```
 
