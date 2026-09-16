@@ -172,10 +172,10 @@ class SnakeGame:
         self.snake.insert(0, new_head)
 
         if new_head == self.food:
-            self.score += REWARD_FOOD
+            self.score += 1
             self.food = self._spawn_food()
 
-            reward = 10.0
+            reward = REWARD_FOOD
         else:
             self.snake.pop()
 
