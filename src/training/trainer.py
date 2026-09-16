@@ -6,7 +6,7 @@ import torch
 from torch.distributed.tensor.parallel import loss
 
 from src.agent.fly_agent import FlyAgent
-from src.config.config import (
+from src.config import (
     CELL_SIZE,
     DEVICE,
     EPISODES,

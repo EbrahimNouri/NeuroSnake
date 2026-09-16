@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from src.brain.fly_brain import FlyBrain
 
-from src.config.config import (
+from src.config import (
   BATCH_SIZE,
   CHECKPOINT_PATH,
   DEVICE,

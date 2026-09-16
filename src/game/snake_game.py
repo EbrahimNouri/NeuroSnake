@@ -4,7 +4,7 @@ import numpy as np
 
 from collections import deque
 
-from src.config.config import (
+from src.config import (
   GRID_SIZE,
   MAX_STEPS,
   LOOKAHEAD_STEPS,
