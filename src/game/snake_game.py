@@ -4,7 +4,16 @@ import numpy as np
 
 from collections import deque
 
-from src.config.config import GRID_SIZE, MAX_STEPS, LOOKAHEAD_STEPS
+from src.config.config import (
+  GRID_SIZE,
+  MAX_STEPS,
+  LOOKAHEAD_STEPS,
+  REWARD_FOOD,
+  REWARD_DEATH,
+  REWARD_STEP,
+  REWARD_CLOSER_FOOD,
+  REWARD_FARTHER_FOOD
+)
 
 
 class SnakeGame:
@@ -158,12 +167,12 @@ class SnakeGame:
         self.steps += 1
 
         if self._is_collision(new_head):
-            return self.get_observation(), -10.0, True
+          return self.get_observation(), REWARD_DEATH, True
 
         self.snake.insert(0, new_head)
 
         if new_head == self.food:
-            self.score += 1
+            self.score += REWARD_FOOD
             self.food = self._spawn_food()
 
             reward = 10.0
@@ -172,12 +181,12 @@ class SnakeGame:
 
             current_distance = self._food_distance()
 
-            reward = -0.02
+            reward = REWARD_STEP
 
             if current_distance < previous_distance:
-                reward += 0.10
+              reward += REWARD_CLOSER_FOOD
             else:
-                reward -= 0.10
+              reward += REWARD_FARTHER_FOOD
 
         if self.steps >= MAX_STEPS:
             return self.get_observation(), reward, True

@@ -5,7 +5,7 @@ CELL_SIZE: int  = 25
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-EPISODES: int  = 1_000
+EPISODES: int  = 10_000
 
 LEARNING_RATE: float = 0.001
 GAMMA: float = 0.90
@@ -37,3 +37,11 @@ CHECKPOINT_PATH: str = "models/snake_fly_checkpoint.pt"
 PRINT_EVERY: int = 25
 
 SPEED_PLAY: int = 20
+
+# Reward settings
+REWARD_FOOD: float =10.0
+REWARD_DEATH: float = -12.0
+
+REWARD_STEP: float = -0.02
+REWARD_CLOSER_FOOD: float = 0.10
+REWARD_FARTHER_FOOD: float = -0.10
