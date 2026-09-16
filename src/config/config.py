@@ -6,7 +6,7 @@ CELL_SIZE = 25
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-EPISODES = 625
+EPISODES = 1180
 
 LEARNING_RATE = 0.001
 GAMMA = 0.90
@@ -21,8 +21,8 @@ LOOKAHEAD_STEPS = 12
 # Food position relative to the snake's head: food_left, food_right, food_up, food_down
 INPUT_SIZE = 11 + (LOOKAHEAD_STEPS * 3)
 
-BATCH_SIZE = 128
-MEMORY_SIZE = 100_000
+BATCH_SIZE = 256
+MEMORY_SIZE = 200_000
 
 TARGET_UPDATE = 200
 

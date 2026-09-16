@@ -13,7 +13,6 @@ def main():
 
     mode = sys.argv[1].lower()
 
-    print(cfg)
     if mode == "train":
         trainer = Trainer(load_checkpoint=True)
         trainer.train()
