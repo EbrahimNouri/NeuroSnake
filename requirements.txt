@@ -1,7 +1,7 @@
 numpy
 pygame
 --extra-index-url https://pytorch.org
-torch==2.7.0
+torch
 #torchvision
 #torchaudio
 #pygame-ce
