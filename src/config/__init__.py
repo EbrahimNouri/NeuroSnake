@@ -7,7 +7,7 @@ CELL_SIZE: int = 25
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-EPISODES: int = 3_000
+EPISODES: int = 10_000
 
 LEARNING_RATE: float = 0.001
 GAMMA: float = 0.90
