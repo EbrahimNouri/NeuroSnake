@@ -10,10 +10,9 @@ class FlyBrain(nn.Module):
         super().__init__()
 
         self.input_layer = nn.Linear(input_size, HIDDEN_SIZE)
-        # self.hidden_layer = nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE)
-        self.hidden_layer1 = nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE)
-        self.hidden_layer2 = nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE)
-        self.output_layer = nn.Linear(HIDDEN_SIZE, output_size)
+        self.hidden_layer1 = nn.Linear(HIDDEN_SIZE, int(HIDDEN_SIZE / 2))
+        self.hidden_layer2 = nn.Linear(int(HIDDEN_SIZE / 2),int(HIDDEN_SIZE / 4))
+        self.output_layer = nn.Linear(int(HIDDEN_SIZE / 4), output_size)
 
         self.neural_ticks = NEURAL_TICKS
         self.threshold = 1.0
@@ -26,12 +25,15 @@ class FlyBrain(nn.Module):
             device=x.device,
         )
 
-        spike_sum = torch.zeros_like(voltage)
+        spike_sum = torch.zeros(
+            x.size(0),
+            int(HIDDEN_SIZE / 4),
+            device=x.device,
+        )
 
         for _ in range(self.neural_ticks):
+
             current = self.input_layer(x)
-            # current = current + self.hidden_layer(voltage)
-            current = current + self.hidden_layer1(voltage)
 
             voltage = (
                 voltage * self.membrane_decay
@@ -44,18 +46,14 @@ class FlyBrain(nn.Module):
 
             voltage = voltage * (1.0 - spike)
 
-            current = self.hidden_layer2(voltage)
+            hidden1 = self.hidden_layer1(voltage)
+            hidden1 = torch.relu(hidden1)
 
-            voltage = (
-                voltage * self.membrane_decay
-                + current
-            )
+            hidden2 = self.hidden_layer2(hidden1)
 
             spike = torch.sigmoid(
-                2.0 * (voltage - self.threshold)
+                2.0 * (hidden2 - self.threshold)
             )
-
-            voltage = voltage * (1.0 - spike)
 
             spike_sum += spike
 

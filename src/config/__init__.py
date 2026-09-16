@@ -7,7 +7,7 @@ CELL_SIZE: int = 25
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-EPISODES: int = 10_000
+EPISODES: int = 2_000
 
 LEARNING_RATE: float = 0.001
 GAMMA: float = 0.90
@@ -23,30 +23,30 @@ LOOKAHEAD_STEPS: int = 20
 INPUT_SIZE: int = 11 + (LOOKAHEAD_STEPS * 3)
 
 BATCH_SIZE: int = 256
-MEMORY_SIZE: int = 200_000
+MEMORY_SIZE: int = 20_000
 
 TARGET_UPDATE: int = 200
 
 EPSILON_START: float = 1.0
-EPSILON_END: float = 0.05
-EPSILON_DECAY: float = 0.995
+EPSILON_END: float = 0.005
+EPSILON_DECAY: float = 0.955
 
 MAX_STEPS: int = 10_000
 
 MODEL_PATH: str = "models/snake_fly_dqn.pt"
 CHECKPOINT_PATH: str = "models/snake_fly_checkpoint.pt"
 
-PRINT_EVERY: int = 25
+PRINT_EVERY: int = 5
 
 SPEED_PLAY: int = 20
 
 # Reward settings
-REWARD_FOOD: float = 10.0
-REWARD_DEATH: float = -12.0
+REWARD_FOOD: float = 11.0
+REWARD_DEATH: float = -13.0
 
 REWARD_STEP: float = -0.02
 REWARD_CLOSER_FOOD: float = 0.10
-REWARD_FARTHER_FOOD: float = -0.10
+REWARD_FARTHER_FOOD: float = -0.09
 
 
 def to_string():

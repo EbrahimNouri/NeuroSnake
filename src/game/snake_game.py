@@ -300,13 +300,37 @@ class SnakeGame:
 
             simulated_snake.pop()
 
-            old_snake = self.snake
-            self.snake = simulated_snake
+            blocked = set(simulated_snake)
+            blocked.discard(new_head)
 
-            space = self._reachable_space(new_head)
+            visited = {new_head}
+            queue = deque([new_head])
 
-            self.snake = old_snake
+            while queue:
+                current_x, current_y = queue.popleft()
 
-            spaces.append(space)
+                for dx, dy in (
+                        (0, -1),
+                        (0, 1),
+                        (-1, 0),
+                        (1, 0),
+                ):
+                    next_position = (
+                        current_x + dx,
+                        current_y + dy,
+                    )
+
+                    nx, ny = next_position
+
+                    if (
+                        0 <= nx < GRID_SIZE
+                        and 0 <= ny < GRID_SIZE
+                        and next_position not in visited
+                        and next_position not in blocked
+                    ):
+                        visited.add(next_position)
+                        queue.append(next_position)
+
+            spaces.append(len(visited))
 
         return spaces
