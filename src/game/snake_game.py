@@ -158,7 +158,7 @@ class SnakeGame:
         self.steps += 1
 
         if self._is_collision(new_head):
-            return self.get_observation(), -10.0, True
+            return self.get_observation(), -12.0, True
 
         self.snake.insert(0, new_head)
 
