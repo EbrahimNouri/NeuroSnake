@@ -41,7 +41,8 @@ The current model is intentionally small:
 
 ```text
 Input:  14
-Hidden: 96
+Hidden: 128
+Hidden: 128
 Output: 4
 ```
 
@@ -75,12 +76,12 @@ The model also supports checkpoints, allowing training to continue after the pro
 The current reward function encourages the agent to:
 
 | Event                  | Reward |
-| ---------------------- | -----: |
+| ---------------------- |-------:|
 | Eat food               |    +10 |
 | Move closer to food    |  +0.10 |
 | Move farther from food |  -0.10 |
 | Normal movement        |  -0.02 |
-| Collision              |    -10 |
+| Collision              |    -12 |
 
 The reward system is intentionally simple and will likely evolve as the agent becomes more capable.
 
@@ -148,7 +149,7 @@ For example:
 EPISODES = 10000
 MAX_STEPS = 5000
 BATCH_SIZE = 128
-HIDDEN_SIZE = 64
+HIDDEN_SIZE = 128
 NEURAL_TICKS = 6
 ```
 
