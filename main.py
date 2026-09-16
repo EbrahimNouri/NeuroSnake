@@ -1,7 +1,8 @@
 import sys
 
 from src.training.trainer import Trainer
-from src.config import to_string
+import src.config as cfg
+
 
 def main():
     if len(sys.argv) < 2:
@@ -12,7 +13,7 @@ def main():
 
     mode = sys.argv[1].lower()
 
-    print(to_string())
+    print(cfg)
     if mode == "train":
         trainer = Trainer(load_checkpoint=True)
         trainer.train()
