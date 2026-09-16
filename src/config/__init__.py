@@ -2,14 +2,12 @@ import torch
 def __init__():
   pass
 
-GRID_SIZE: int = 1
-CELL_SIZE: int = 1
 GRID_SIZE: int = 20
 CELL_SIZE: int = 25
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-EPISODES: int = 10_000
+EPISODES: int = 3_000
 
 LEARNING_RATE: float = 0.001
 GAMMA: float = 0.90
@@ -24,13 +22,13 @@ LOOKAHEAD_STEPS: int = 20
 # Food position relative to the snake's head: food_left, food_right, food_up, food_down
 INPUT_SIZE: int = 11 + (LOOKAHEAD_STEPS * 3)
 
-BATCH_SIZE: int = 128
-MEMORY_SIZE: int = 100_000
+BATCH_SIZE: int = 256
+MEMORY_SIZE: int = 200_000
 
 TARGET_UPDATE: int = 200
 
 EPSILON_START: float = 1.0
-EPSILON_END: float = 0.01
+EPSILON_END: float = 0.05
 EPSILON_DECAY: float = 0.995
 
 MAX_STEPS: int = 10_000
