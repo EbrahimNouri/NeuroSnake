@@ -104,6 +104,9 @@ class Trainer:
             if score > self.best_score:
                 self.best_score = score
 
+            # Update epsilon once per episode
+            self.agent.update_epsilon()
+
             if episode % PRINT_EVERY == 0:
                 average_score = np.mean(
                     scores[-PRINT_EVERY:]

@@ -7,238 +7,278 @@ import torch.optim as optim
 from src.brain.fly_brain import FlyBrain
 
 from src.config import (
-  BATCH_SIZE,
-  CHECKPOINT_PATH,
-  DEVICE,
-  EPSILON_DECAY,
-  EPSILON_END,
-  EPSILON_START,
-  GAMMA,
-  LEARNING_RATE,
-  TARGET_UPDATE,
-  MODEL_PATH,
+    BATCH_SIZE,
+    CHECKPOINT_PATH,
+    DEVICE,
+    EPSILON_DECAY,
+    EPSILON_END,
+    EPSILON_START,
+    GAMMA,
+    LEARNING_RATE,
+    MODEL_PATH,
+    TARGET_UPDATE,
 )
 from src.rl.replay_memory import ReplayMemory
 
 
 class FlyAgent:
 
-  def __init__(self):
-    self.brain = FlyBrain().to(DEVICE)
+    def __init__(self):
+        self.brain = FlyBrain().to(DEVICE)
 
-    self.target_brain = FlyBrain().to(DEVICE)
-    self.target_brain.load_state_dict(self.brain.state_dict())
-    self.target_brain.eval()
+        self.target_brain = FlyBrain().to(DEVICE)
+        self.target_brain.load_state_dict(
+            self.brain.state_dict()
+        )
+        self.target_brain.eval()
 
-    self.optimizer = optim.Adam(
-      self.brain.parameters(),
-      lr=LEARNING_RATE,
-    )
+        self.optimizer = optim.Adam(
+            self.brain.parameters(),
+            lr=LEARNING_RATE,
+        )
 
-    self.memory = ReplayMemory()
+        self.memory = ReplayMemory()
 
-    self.gamma = GAMMA
+        self.gamma = GAMMA
 
-    self.epsilon = EPSILON_START
+        self.epsilon = EPSILON_START
 
-    self.training_steps = 0
+        self.training_steps = 0
 
-  def choose_action(self, state, training=True):
-    if training and random.random() < self.epsilon:
-      return random.randrange(4)
+    def choose_action(self, state, training=True):
+        if training and random.random() < self.epsilon:
+            return random.randrange(4)
 
-    state_tensor = torch.tensor(
-      state,
-      dtype=torch.float32,
-      device=DEVICE,
-    ).unsqueeze(0)
+        state_tensor = torch.tensor(
+            state,
+            dtype=torch.float32,
+            device=DEVICE,
+        ).unsqueeze(0)
 
-    with torch.no_grad():
-      q_values = self.brain(state_tensor)
+        with torch.no_grad():
+            q_values = self.brain(state_tensor)
 
-    return int(torch.argmax(q_values, dim=1).item())
+        return int(
+            torch.argmax(q_values, dim=1).item()
+        )
 
-  def remember(
-      self,
-      state,
-      action,
-      reward,
-      next_state,
-      done,
-  ):
-    self.memory.push(
-      state,
-      action,
-      reward,
-      next_state,
-      done,
-    )
+    def remember(
+        self,
+        state,
+        action,
+        reward,
+        next_state,
+        done,
+    ):
+        self.memory.push(
+            state,
+            action,
+            reward,
+            next_state,
+            done,
+        )
 
-  def train_step(self):
-    if len(self.memory) < BATCH_SIZE:
-      return None
+    def train_step(self):
+        if len(self.memory) < BATCH_SIZE:
+            return None
 
-    (
-      states,
-      actions,
-      rewards,
-      next_states,
-      dones,
-    ) = self.memory.sample(BATCH_SIZE)
+        (
+            states,
+            actions,
+            rewards,
+            next_states,
+            dones,
+        ) = self.memory.sample(BATCH_SIZE)
 
-    states = torch.tensor(
-      states,
-      dtype=torch.float32,
-      device=DEVICE,
-    )
+        states = torch.tensor(
+            states,
+            dtype=torch.float32,
+            device=DEVICE,
+        )
 
-    actions = torch.tensor(
-      actions,
-      dtype=torch.long,
-      device=DEVICE,
-    )
+        actions = torch.tensor(
+            actions,
+            dtype=torch.long,
+            device=DEVICE,
+        )
 
-    rewards = torch.tensor(
-      rewards,
-      dtype=torch.float32,
-      device=DEVICE,
-    )
+        rewards = torch.tensor(
+            rewards,
+            dtype=torch.float32,
+            device=DEVICE,
+        )
 
-    next_states = torch.tensor(
-      next_states,
-      dtype=torch.float32,
-      device=DEVICE,
-    )
+        next_states = torch.tensor(
+            next_states,
+            dtype=torch.float32,
+            device=DEVICE,
+        )
 
-    dones = torch.tensor(
-      dones,
-      dtype=torch.float32,
-      device=DEVICE,
-    )
+        dones = torch.tensor(
+            dones,
+            dtype=torch.float32,
+            device=DEVICE,
+        )
 
-    current_q = self.brain(states).gather(
-      1,
-      actions.unsqueeze(1),
-    ).squeeze(1)
+        current_q = self.brain(states).gather(
+            1,
+            actions.unsqueeze(1),
+        ).squeeze(1)
 
-    with torch.no_grad():
-      next_q = self.target_brain(next_states).max(
-        dim=1
-      ).values
+        with torch.no_grad():
+            next_actions = self.brain(
+                next_states
+            ).argmax(
+                dim=1,
+                keepdim=True,
+            )
 
-      target_q = rewards + (
-          self.gamma * next_q * (1.0 - dones)
-      )
+            next_q = self.target_brain(
+                next_states
+            ).gather(
+                1,
+                next_actions,
+            ).squeeze(1)
 
-    loss = F.smooth_l1_loss(
-      current_q,
-      target_q,
-    )
+            target_q = rewards + (
+                self.gamma
+                * next_q
+                * (1.0 - dones)
+            )
 
-    self.optimizer.zero_grad()
+        td_error = target_q - current_q
 
-    loss.backward()
+        loss = F.smooth_l1_loss(
+            current_q,
+            target_q,
+        )
 
-    torch.nn.utils.clip_grad_norm_(
-      self.brain.parameters(),
-      5.0,
-    )
+        self.optimizer.zero_grad()
 
-    self.optimizer.step()
+        loss.backward()
 
-    self.training_steps += 1
+        torch.nn.utils.clip_grad_norm_(
+            self.brain.parameters(),
+            5.0,
+        )
 
-    if self.training_steps % TARGET_UPDATE == 0:
-      self.target_brain.load_state_dict(
-        self.brain.state_dict()
-      )
+        self.optimizer.step()
 
-    self.epsilon = max(
-      EPSILON_END,
-      self.epsilon * EPSILON_DECAY,
-    )
+        self.training_steps += 1
 
-    return loss.item()
+        if self.training_steps % 500 == 0:
+            print(
+                f"Q={current_q.mean().item():.2f} "
+                f"Target={target_q.mean().item():.2f} "
+                f"TD={td_error.abs().mean().item():.2f} "
+                f"Loss={loss.item():.4f}"
+            )
 
-  def save_checkpoint(self, episode, best_score):
-    directory = os.path.dirname(CHECKPOINT_PATH)
+        if self.training_steps % TARGET_UPDATE == 0:
+            self.target_brain.load_state_dict(
+                self.brain.state_dict()
+            )
 
-    if directory:
-      os.makedirs(directory, exist_ok=True)
+        return loss.item()
 
-    checkpoint = {
-      "episode": episode,
-      "brain_state": self.brain.state_dict(),
-      "target_brain_state": self.target_brain.state_dict(),
-      "optimizer_state": self.optimizer.state_dict(),
-      "epsilon": self.epsilon,
-      "training_steps": self.training_steps,
-      "best_score": best_score,
-    }
+    def update_epsilon(self):
+        self.epsilon *= EPSILON_DECAY
 
-    torch.save(
-      checkpoint,
-      CHECKPOINT_PATH,
-    )
+        if self.epsilon < EPSILON_END:
+            self.epsilon = EPSILON_END
 
-  def load_checkpoint(self):
-    if not os.path.exists(CHECKPOINT_PATH):
-      return 0, 0
+    def save_checkpoint(self, episode, best_score):
+        directory = os.path.dirname(
+            CHECKPOINT_PATH
+        )
 
-    checkpoint = torch.load(
-      CHECKPOINT_PATH,
-      map_location=DEVICE,
-      weights_only=False,
-    )
+        if directory:
+            os.makedirs(
+                directory,
+                exist_ok=True,
+            )
 
-    self.brain.load_state_dict(
-      checkpoint["brain_state"]
-    )
+        checkpoint = {
+            "episode": episode,
+            "brain_state": self.brain.state_dict(),
+            "target_brain_state": (
+                self.target_brain.state_dict()
+            ),
+            "optimizer_state": (
+                self.optimizer.state_dict()
+            ),
+            "epsilon": self.epsilon,
+            "training_steps": self.training_steps,
+            "best_score": best_score,
+        }
 
-    self.target_brain.load_state_dict(
-      checkpoint["target_brain_state"]
-    )
+        torch.save(
+            checkpoint,
+            CHECKPOINT_PATH,
+        )
 
-    self.optimizer.load_state_dict(
-      checkpoint["optimizer_state"]
-    )
+    def load_checkpoint(self):
+        if not os.path.exists(
+            CHECKPOINT_PATH
+        ):
+            return 0, 0
 
-    self.epsilon = checkpoint["epsilon"]
+        checkpoint = torch.load(
+            CHECKPOINT_PATH,
+            map_location=DEVICE,
+            weights_only=False,
+        )
 
-    self.training_steps = checkpoint[
-      "training_steps"
-    ]
+        self.brain.load_state_dict(
+            checkpoint["brain_state"]
+        )
 
-    episode = checkpoint.get(
-      "episode",
-      0,
-    )
+        self.target_brain.load_state_dict(
+            checkpoint["target_brain_state"]
+        )
 
-    best_score = checkpoint.get(
-      "best_score",
-      0,
-    )
+        self.optimizer.load_state_dict(
+            checkpoint["optimizer_state"]
+        )
 
-    return episode, best_score
+        self.epsilon = checkpoint["epsilon"]
 
-  def load_model(self):
-    if not os.path.exists(MODEL_PATH):
-      return False
+        self.training_steps = checkpoint[
+            "training_steps"
+        ]
 
-    state_dict = torch.load(
-      MODEL_PATH,
-      map_location=DEVICE,
-      weights_only=True,
-    )
+        episode = checkpoint.get(
+            "episode",
+            0,
+        )
 
-    self.brain.load_state_dict(state_dict)
+        best_score = checkpoint.get(
+            "best_score",
+            0,
+        )
 
-    self.target_brain.load_state_dict(
-      self.brain.state_dict()
-    )
+        return episode, best_score
 
-    print(
-      f"Model loaded from: {MODEL_PATH}"
-    )
+    def load_model(self):
+        if not os.path.exists(MODEL_PATH):
+            return False
 
-    return True
+        state_dict = torch.load(
+            MODEL_PATH,
+            map_location=DEVICE,
+            weights_only=True,
+        )
+
+        self.brain.load_state_dict(
+            state_dict
+        )
+
+        self.target_brain.load_state_dict(
+            self.brain.state_dict()
+        )
+
+        print(
+            f"Model loaded from: {MODEL_PATH}"
+        )
+
+        return True

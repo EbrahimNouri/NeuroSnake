@@ -300,8 +300,7 @@ class SnakeGame:
 
             simulated_snake.pop()
 
-            blocked = set(simulated_snake)
-            blocked.discard(new_head)
+            blocked = set(simulated_snake[1:])
 
             visited = {new_head}
             queue = deque([new_head])
@@ -309,15 +308,15 @@ class SnakeGame:
             while queue:
                 current_x, current_y = queue.popleft()
 
-                for dx, dy in (
+                for next_dx, next_dy in (
                         (0, -1),
                         (0, 1),
                         (-1, 0),
                         (1, 0),
                 ):
                     next_position = (
-                        current_x + dx,
-                        current_y + dy,
+                        current_x + next_dx,
+                        current_y + next_dy,
                     )
 
                     nx, ny = next_position
@@ -332,5 +331,10 @@ class SnakeGame:
                         queue.append(next_position)
 
             spaces.append(len(visited))
+
+        if len(spaces) < LOOKAHEAD_STEPS:
+            spaces.extend(
+                [0] * (LOOKAHEAD_STEPS - len(spaces))
+            )
 
         return spaces

@@ -2,19 +2,19 @@ import torch
 def __init__():
   pass
 
-GRID_SIZE: int = 20
-CELL_SIZE: int = 25
+GRID_SIZE: int = 20 #EVEN
+CELL_SIZE: int = GRID_SIZE
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-EPISODES: int = 2_000
+EPISODES: int = 3_000
 
-LEARNING_RATE: float = 0.001
+LEARNING_RATE: float = 0.0001
 GAMMA: float = 0.90
 
 HIDDEN_SIZE: int = 128
 NEURAL_TICKS: int = 6
-LOOKAHEAD_STEPS: int = 20
+LOOKAHEAD_STEPS: int = int((GRID_SIZE / 2) + 2)
 
 # HIDDEN : 11 =>
 # Immediate collision danger:       straight, right, left, danger_straight, danger_right, danger_left
@@ -25,20 +25,20 @@ INPUT_SIZE: int = 11 + (LOOKAHEAD_STEPS * 3)
 BATCH_SIZE: int = 256
 MEMORY_SIZE: int = 20_000
 
-TARGET_UPDATE: int = 200
+TARGET_UPDATE: int = 1000
 
-EPSILON_START: float = 1.0
-EPSILON_END: float = 0.005
-EPSILON_DECAY: float = 0.955
+EPSILON_START: float = 0.1
+EPSILON_END: float = 0.001
+EPSILON_DECAY: float = 0.999
 
 MAX_STEPS: int = 10_000
 
 MODEL_PATH: str = "models/snake_fly_dqn.pt"
 CHECKPOINT_PATH: str = "models/snake_fly_checkpoint.pt"
 
-PRINT_EVERY: int = 5
+PRINT_EVERY: int = 25
 
-SPEED_PLAY: int = 20
+SPEED_PLAY: int = 50
 
 # Reward settings
 REWARD_FOOD: float = 11.0
