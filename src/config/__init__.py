@@ -1,80 +1,107 @@
 import torch
-def __init__():
-  pass
 
-GRID_SIZE: int = 20 #EVEN
-CELL_SIZE: int = GRID_SIZE
+GRID_SIZE: int = 20
+CELL_SIZE: int = 25
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device(
+    "mps" if torch.backends.mps.is_available()
+    else "cuda" if torch.cuda.is_available()
+    else "cpu"
+)
 
-EPISODES: int = 3_000
+EPISODES: int = 10_000
 
-LEARNING_RATE: float = 0.0001
-GAMMA: float = 0.90
+LEARNING_RATE: float = 0.0003
+GAMMA: float = 0.95
 
-HIDDEN_SIZE: int = 128
-NEURAL_TICKS: int = 6
-LOOKAHEAD_STEPS: int = int((GRID_SIZE / 2) + 2)
+HIDDEN_SIZE: int = 256
+INPUT_SIZE: int = 25
 
-# HIDDEN : 11 =>
-# Immediate collision danger:       straight, right, left, danger_straight, danger_right, danger_left
-# Current movement direction:       up, down, left, right, direction_up, direction_down, direction_left, direction_right
-# Food position relative to the snake's head: food_left, food_right, food_up, food_down
-INPUT_SIZE: int = 11 + (LOOKAHEAD_STEPS * 3)
+BATCH_SIZE: int = 64
+MEMORY_SIZE: int = 200_000
 
-BATCH_SIZE: int = 256
-MEMORY_SIZE: int = 20_000
+TARGET_UPDATE: int = 500
 
-TARGET_UPDATE: int = 1000
+EPSILON_START: float = 1.0
+EPSILON_END: float = 0.10
+EPSILON_DECAY: float = 0.9995
 
-EPSILON_START: float = 0.1
-EPSILON_END: float = 0.001
-EPSILON_DECAY: float = 0.999
-
-MAX_STEPS: int = 10_000
+MAX_STEPS: int = 2_000
 
 MODEL_PATH: str = "models/snake_fly_dqn.pt"
 CHECKPOINT_PATH: str = "models/snake_fly_checkpoint.pt"
+PRETRAINED_PATH: str = "models/pretrained_brain.pt"
 
-PRINT_EVERY: int = 25
+PRINT_EVERY: int = 10
+SPEED_PLAY: int = 20
 
-SPEED_PLAY: int = 50
+N_STEP: int = 3
 
-# Reward settings
-REWARD_FOOD: float = 11.0
-REWARD_DEATH: float = -13.0
+REWARD_FOOD: float = 5.0
+REWARD_DEATH: float = -2.0
+REWARD_STEP: float = -0.01
+REWARD_CLOSER_FOOD: float = 0.5
+REWARD_FARTHER_FOOD: float = -0.6
+REWARD_TRUNCATED: float = -2.0
 
-REWARD_STEP: float = -0.02
-REWARD_CLOSER_FOOD: float = 0.10
-REWARD_FARTHER_FOOD: float = -0.09
+CONFIG = {
+    "GRID_SIZE": GRID_SIZE,
+    "CELL_SIZE": CELL_SIZE,
+    "DEVICE": str(DEVICE),
+    "EPISODES": EPISODES,
+    "LEARNING_RATE": LEARNING_RATE,
+    "GAMMA": GAMMA,
+    "HIDDEN_SIZE": HIDDEN_SIZE,
+    "INPUT_SIZE": INPUT_SIZE,
+    "BATCH_SIZE": BATCH_SIZE,
+    "MEMORY_SIZE": MEMORY_SIZE,
+    "TARGET_UPDATE": TARGET_UPDATE,
+    "EPSILON_START": EPSILON_START,
+    "EPSILON_END": EPSILON_END,
+    "EPSILON_DECAY": EPSILON_DECAY,
+    "MAX_STEPS": MAX_STEPS,
+    "MODEL_PATH": MODEL_PATH,
+    "CHECKPOINT_PATH": CHECKPOINT_PATH,
+    "PRETRAINED_PATH": PRETRAINED_PATH,
+    "PRINT_EVERY": PRINT_EVERY,
+    "SPEED_PLAY": SPEED_PLAY,
+    "N_STEP": N_STEP,
+    "REWARD_FOOD": REWARD_FOOD,
+    "REWARD_DEATH": REWARD_DEATH,
+    "REWARD_STEP": REWARD_STEP,
+    "REWARD_CLOSER_FOOD": REWARD_CLOSER_FOOD,
+    "REWARD_FARTHER_FOOD": REWARD_FARTHER_FOOD,
+    "REWARD_TRUNCATED": REWARD_TRUNCATED,
+}
 
 
 def to_string():
-  print(f"""
-  GRID_SIZE: int  = {GRID_SIZE}
-  CELL_SIZE: int  = {CELL_SIZE}
-  DEVICE = {DEVICE}
-  EPISODES: int  = {EPISODES}
-  LEARNING_RATE: float = {LEARNING_RATE}
-  GAMMA: float = {GAMMA}
-  HIDDEN_SIZE: int = {HIDDEN_SIZE}
-  NEURAL_TICKS: int = {NEURAL_TICKS}
-  LOOKAHEAD_STEPS: int = {LOOKAHEAD_STEPS}
-  INPUT_SIZE: int  = {INPUT_SIZE}
-  BATCH_SIZE: int  = {BATCH_SIZE}
-  MEMORY_SIZE: int  = {MEMORY_SIZE}
-  TARGET_UPDATE: int  = {TARGET_UPDATE}
-  EPSILON_START: float  = {EPSILON_START}
-  EPSILON_END: float = {EPSILON_END}
-  EPSILON_DECAY: float = {EPSILON_DECAY}
-  MAX_STEPS: int = {MAX_STEPS}
-  MODEL_PATH: str = {MODEL_PATH}
-  CHECKPOINT_PATH: str = {CHECKPOINT_PATH}
-  PRINT_EVERY: int = {PRINT_EVERY}
-  SPEED_PLAY: int = {SPEED_PLAY}
-  REWARD_FOOD: float = {REWARD_FOOD}
-  REWARD_DEATH: float = {REWARD_DEATH}
-  REWARD_STEP: float = {REWARD_STEP}
-  REWARD_CLOSER_FOOD: float = {REWARD_CLOSER_FOOD}
-  REWARD_FARTHER_FOOD: float = {REWARD_FARTHER_FOOD}
-  """)
+    print(f"""
+    GRID_SIZE: int  = {GRID_SIZE}
+    CELL_SIZE: int  = {CELL_SIZE}
+    DEVICE = {DEVICE}
+    EPISODES: int  = {EPISODES}
+    LEARNING_RATE: float = {LEARNING_RATE}
+    GAMMA: float = {GAMMA}
+    HIDDEN_SIZE: int = {HIDDEN_SIZE}
+    INPUT_SIZE: int  = {INPUT_SIZE}
+    BATCH_SIZE: int  = {BATCH_SIZE}
+    MEMORY_SIZE: int  = {MEMORY_SIZE}
+    TARGET_UPDATE: int  = {TARGET_UPDATE}
+    EPSILON_START: float  = {EPSILON_START}
+    EPSILON_END: float = {EPSILON_END}
+    EPSILON_DECAY: float = {EPSILON_DECAY}
+    MAX_STEPS: int = {MAX_STEPS}
+    MODEL_PATH: str = {MODEL_PATH}
+    CHECKPOINT_PATH: str = {CHECKPOINT_PATH}
+    PRETRAINED_PATH: str = {PRETRAINED_PATH}
+    PRINT_EVERY: int = {PRINT_EVERY}
+    SPEED_PLAY: int = {SPEED_PLAY}
+    N_STEP: int = {N_STEP}
+    REWARD_FOOD: float = {REWARD_FOOD}
+    REWARD_DEATH: float = {REWARD_DEATH}
+    REWARD_STEP: float = {REWARD_STEP}
+    REWARD_CLOSER_FOOD: float = {REWARD_CLOSER_FOOD}
+    REWARD_FARTHER_FOOD: float = {REWARD_FARTHER_FOOD}
+    REWARD_TRUNCATED: float = {REWARD_TRUNCATED}
+    """)
