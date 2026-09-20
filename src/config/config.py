@@ -1,4 +1,5 @@
 import torch
+from pathlib import Path
 
 
 GRID_SIZE = 20
@@ -32,9 +33,14 @@ EPSILON_DECAY = 0.995
 
 MAX_STEPS = 10_000
 
-MODEL_PATH = "models/snake_fly_dqn.pt"
-CHECKPOINT_PATH = "models/snake_fly_checkpoint.pt"
+SAFETY_NET_ENABLED = True
+STUCK_STEPS = 300
+MAX_STEPS_PLAY = 100_000
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+MODEL_PATH = PROJECT_ROOT / "models" / "snake_fly_dqn.pt"
+CHECKPOINT_PATH = PROJECT_ROOT / "models" / "snake_fly_checkpoint.pt"
 
 PRINT_EVERY = 25
 
-SPEED_PLAY = 50
+SPEED_PLAY = 500

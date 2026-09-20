@@ -9,7 +9,8 @@ from src.config.config import GRID_SIZE, MAX_STEPS, LOOKAHEAD_STEPS
 
 class SnakeGame:
 
-    def __init__(self):
+    def __init__(self, max_steps=MAX_STEPS):
+        self.max_steps = max_steps
         self.reset()
 
     def reset(self):
@@ -26,6 +27,7 @@ class SnakeGame:
 
         self.score = 0
         self.steps = 0
+        self.won = False
 
         return self.get_observation()
 
@@ -164,6 +166,13 @@ class SnakeGame:
 
         if new_head == self.food:
             self.score += 1
+
+            if len(self.snake) >= GRID_SIZE * GRID_SIZE:
+                # Board completely filled: no free cell remains to spawn food.
+                self.food = new_head
+                self.won = True
+                return self.get_observation(), 10.0, True
+
             self.food = self._spawn_food()
 
             reward = 10.0
@@ -179,7 +188,7 @@ class SnakeGame:
             else:
                 reward -= 0.10
 
-        if self.steps >= MAX_STEPS:
+        if self.steps >= self.max_steps:
             return self.get_observation(), reward, True
 
         return self.get_observation(), reward, False
