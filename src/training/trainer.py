@@ -5,19 +5,23 @@ import pygame
 import torch
 
 from src.agent.fly_agent import FlyAgent
-from src.config import (
+from src.config.config import (
     CELL_SIZE,
     DEVICE,
     EPISODES,
     GRID_SIZE,
     MAX_STEPS,
+    MAX_STEPS_PLAY,
     MODEL_PATH,
     PARALLEL_ENVIRONMENTS,
     PRINT_EVERY,
+    SAFETY_NET_ENABLED,
     SPEED_PLAY,
+    STUCK_STEPS,
 )
 from src.config.logger import Logger
 from src.game.snake_game import SnakeGame
+from src.game.snake_planner import SnakePlanner
 
 
 class Trainer:
@@ -229,6 +233,11 @@ class Trainer:
             )
             return
 
+        # A full-board run needs far more steps than training allows.
+        self.game.max_steps = MAX_STEPS_PLAY
+
+        planner = SnakePlanner()
+
         pygame.init()
 
         screen = pygame.display.set_mode(
@@ -239,12 +248,18 @@ class Trainer:
         )
 
         pygame.display.set_caption(
-            "Snake - FlyBrain"
+            "Snake - FlyBrain + Safety Net"
         )
 
         clock = pygame.time.Clock()
 
         state = self.game.reset()
+
+        # Hybrid-controller state.
+        brain_moves = 0
+        net_moves = 0
+        steps_since_food = 0
+        planner_driving = False
 
         self.logger.log("Play mode started.")
 
@@ -260,6 +275,32 @@ class Trainer:
                 training=False,
             )
 
+            override = False
+
+            if SAFETY_NET_ENABLED:
+                if planner_driving:
+                    action, _ = planner.guide(self.game)
+                    override = True
+                else:
+                    action, override = planner.decide(
+                        self.game,
+                        action,
+                    )
+
+                    steps_since_food += 1
+
+                    if steps_since_food >= STUCK_STEPS:
+                        # Brain stalled: let the planner drive until
+                        # the next food is eaten.
+                        planner_driving = True
+                        action, _ = planner.guide(self.game)
+                        override = True
+
+            if override:
+                net_moves += 1
+            else:
+                brain_moves += 1
+
             next_state, reward, done = self.game.step(
                 action
             )
@@ -268,10 +309,18 @@ class Trainer:
 
             screen.fill((20, 20, 20))
 
-            for x, y in self.game.snake:
+            for index, (x, y) in enumerate(
+                self.game.snake
+            ):
+                color = (
+                    (80, 160, 255)
+                    if (index == 0 and override)
+                    else (0, 200, 0)
+                )
+
                 pygame.draw.rect(
                     screen,
-                    (0, 200, 0),
+                    color,
                     (
                         x * CELL_SIZE,
                         y * CELL_SIZE,
@@ -295,11 +344,32 @@ class Trainer:
 
             pygame.display.flip()
 
+            if reward >= 10.0:
+                # Food eaten: reset stuck tracking and hand control
+                # back to the brain.
+                steps_since_food = 0
+                planner_driving = False
+
             if done:
-                self.logger.log(
-                    f"Game over | "
-                    f"Score: {self.game.score}"
-                )
+                if self.game.won:
+                    self.logger.log(
+                        f"BOARD FILLED! | "
+                        f"Score: {self.game.score} | "
+                        f"Brain moves: {brain_moves} | "
+                        f"Safety net moves: {net_moves}"
+                    )
+                else:
+                    self.logger.log(
+                        f"Game over | "
+                        f"Score: {self.game.score} | "
+                        f"Brain moves: {brain_moves} | "
+                        f"Safety net moves: {net_moves}"
+                    )
+
+                brain_moves = 0
+                net_moves = 0
+                steps_since_food = 0
+                planner_driving = False
 
                 state = self.game.reset()
 
