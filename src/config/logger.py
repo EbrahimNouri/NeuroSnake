@@ -126,9 +126,13 @@ class Logger:
         loss,
         epsilon,
         steps,
+        envs=1,
+        episodes_finished=1,
     ):
         message = (
             f"Episode {episode} | "
+            f"Envs {envs} | "
+            f"Finished {episodes_finished} | "
             f"Score {score} | "
             f"Avg {avg_score:.2f} | "
             f"Best {best_score} | "

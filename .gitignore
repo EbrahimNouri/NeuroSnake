@@ -1,2 +1,5 @@
 */logs
 *models*/backup*
+/.opencode/
+/.freebuff
+.gitignore

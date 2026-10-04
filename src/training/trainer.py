@@ -3,7 +3,6 @@ import os
 import numpy as np
 import pygame
 import torch
-from torch.distributed.tensor.parallel import loss
 
 from src.agent.fly_agent import FlyAgent
 from src.config import (
@@ -13,6 +12,7 @@ from src.config import (
     GRID_SIZE,
     MAX_STEPS,
     MODEL_PATH,
+    PARALLEL_ENVIRONMENTS,
     PRINT_EVERY,
     SPEED_PLAY,
 )
@@ -25,8 +25,21 @@ class Trainer:
     def __init__(self, load_checkpoint=True):
         self.logger = Logger()
 
-        self.game = SnakeGame()
+        self.env_count = PARALLEL_ENVIRONMENTS
+
+        self.games = [
+            SnakeGame()
+            for _ in range(self.env_count)
+        ]
+
         self.agent = FlyAgent()
+
+        self.states = [
+            game.get_observation()
+            for game in self.games
+        ]
+
+        self.game = self.games[0]
 
         self.start_episode = 1
         self.best_score = 0
@@ -64,45 +77,87 @@ class Trainer:
             self.start_episode,
             EPISODES + 1,
         ):
-            state = self.game.reset()
+            active = np.ones(
+                self.env_count,
+                dtype=bool,
+            )
 
-            total_reward = 0.0
+            episode_scores = []
+
+            total_rewards = np.zeros(
+                self.env_count,
+                dtype=np.float64,
+            )
+
+            episode_steps = np.zeros(
+                self.env_count,
+                dtype=np.int64,
+            )
+
             losses = []
 
             for _ in range(MAX_STEPS):
-                action = self.agent.choose_action(
-                    state,
+                indices = np.flatnonzero(active)
+
+                if indices.size == 0:
+                    break
+
+                batch_states = np.stack(
+                    [
+                        self.states[index]
+                        for index in indices
+                    ]
+                )
+
+                actions = self.agent.choose_action_batch(
+                    batch_states,
                     training=True,
                 )
 
-                next_state, reward, done = self.game.step(
-                    action
+                for index, action in zip(indices, actions):
+                    game = self.games[index]
+                    state = self.states[index]
+
+                    next_state, reward, done = game.step(
+                        int(action)
+                    )
+
+                    self.agent.remember(
+                        state,
+                        int(action),
+                        reward,
+                        next_state,
+                        done,
+                    )
+
+                    total_rewards[index] += reward
+                    episode_steps[index] += 1
+
+                    if done:
+                        episode_scores.append(game.score)
+
+                        if game.score > self.best_score:
+                            self.best_score = game.score
+
+                        active[index] = False
+
+                        self.states[index] = game.reset()
+                    else:
+                        self.states[index] = next_state
+
+                if self.agent.train_step():
+                    losses.append(
+                        self.agent.mean_loss()
+                    )
+
+            scores.extend(episode_scores)
+
+            if episode_scores:
+                episode_score = int(
+                    np.mean(episode_scores)
                 )
-
-                self.agent.remember(
-                    state,
-                    action,
-                    reward,
-                    next_state,
-                    done,
-                )
-
-                loss = self.agent.train_step()
-
-                if loss is not None:
-                    losses.append(loss)
-
-                state = next_state
-                total_reward += reward
-
-                if done:
-                    break
-
-            score = self.game.score
-            scores.append(score)
-
-            if score > self.best_score:
-                self.best_score = score
+            else:
+                episode_score = 0
 
             # Update epsilon once per episode
             self.agent.update_epsilon()
@@ -110,7 +165,7 @@ class Trainer:
             if episode % PRINT_EVERY == 0:
                 average_score = np.mean(
                     scores[-PRINT_EVERY:]
-                )
+                ) if scores else 0.0
 
                 average_loss = (
                     np.mean(losses)
@@ -120,13 +175,17 @@ class Trainer:
 
                 self.logger.episode(
                     episode=episode,
-                    score=score,
+                    score=episode_score,
                     avg_score=average_score,
                     best_score=self.best_score,
-                    reward=total_reward,
+                    reward=float(
+                        np.mean(total_rewards)
+                    ),
                     loss=average_loss,
                     epsilon=self.agent.epsilon,
-                    steps=self.game.steps,
+                    steps=int(np.max(episode_steps)),
+                    envs=self.env_count,
+                    episodes_finished=len(episode_scores),
                 )
 
                 self.agent.save_checkpoint(

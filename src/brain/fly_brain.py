@@ -41,9 +41,8 @@ class FlyBrain(nn.Module):
             device=x.device,
         )
 
+        current = self.input_layer(x)
         for _ in range(self.neural_ticks):
-
-            current = self.input_layer(x)
 
             voltage = (
                 voltage * self.membrane_decay
