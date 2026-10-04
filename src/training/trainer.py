@@ -5,7 +5,7 @@ import pygame
 import torch
 
 from src.agent.fly_agent import FlyAgent
-from src.config.config import (
+from src.config import (
     CELL_SIZE,
     DEVICE,
     EPISODES,
@@ -298,8 +298,10 @@ class Trainer:
 
             if override:
                 net_moves += 1
+                print(f"net_moves: {net_moves}", "brain_moves: ", brain_moves)
             else:
                 brain_moves += 1
+                # print(f"brain_moves: {brain_moves}")
 
             next_state, reward, done = self.game.step(
                 action

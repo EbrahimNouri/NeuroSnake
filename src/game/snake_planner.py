@@ -15,7 +15,7 @@ All search runs on virtual copies; the real game is never mutated.
 
 from collections import deque
 
-from src.config.config import GRID_SIZE
+from src.config import GRID_SIZE
 
 # Action indices, matching SnakeGame.step.
 UP, DOWN, LEFT, RIGHT = 0, 1, 2, 3

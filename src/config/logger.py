@@ -3,7 +3,37 @@ import json
 import os
 from datetime import datetime
 
-from src.config import config
+from src import config
+
+
+def _read_config():
+    config_data = {}
+
+    for name in dir(config):
+        if name.isupper():
+            value = getattr(config, name)
+
+            if isinstance(
+                value,
+                (str, int, float, bool, type(None)),
+            ):
+                config_data[name] = value
+
+            elif name == "DEVICE":
+                config_data[name] = str(value)
+
+    return config_data
+
+
+def _create_config_hash(config_data):
+    config_json = json.dumps(
+        config_data,
+        sort_keys=True,
+    )
+
+    return hashlib.sha256(
+        config_json.encode("utf-8")
+    ).hexdigest()
 
 
 class Logger:
@@ -12,8 +42,8 @@ class Logger:
         self.log_dir = "logs"
         os.makedirs(self.log_dir, exist_ok=True)
 
-        self.config = self._read_config()
-        self.config_hash = self._create_config_hash(
+        self.config = _read_config()
+        self.config_hash = _create_config_hash(
             self.config
         )
 
@@ -31,34 +61,6 @@ class Logger:
             )
 
             self._write_config()
-
-    def _read_config(self):
-        config_data = {}
-
-        for name in dir(config):
-            if name.isupper():
-                value = getattr(config, name)
-
-                if isinstance(
-                    value,
-                    (str, int, float, bool, type(None)),
-                ):
-                    config_data[name] = value
-
-                elif name == "DEVICE":
-                    config_data[name] = str(value)
-
-        return config_data
-
-    def _create_config_hash(self, config_data):
-        config_json = json.dumps(
-            config_data,
-            sort_keys=True,
-        )
-
-        return hashlib.sha256(
-            config_json.encode("utf-8")
-        ).hexdigest()
 
     def _find_log_file(self):
         for filename in os.listdir(self.log_dir):
@@ -91,7 +93,6 @@ class Logger:
             "a",
             encoding="utf-8",
         ) as file:
-
             file.write(
                 f"CONFIG_HASH={self.config_hash}\n"
             )

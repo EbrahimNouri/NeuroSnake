@@ -1,8 +1,7 @@
 import sys
 
 from src.training.trainer import Trainer
-import src.config as cfg
-
+from src.config import to_string
 
 def main():
     if len(sys.argv) < 2:

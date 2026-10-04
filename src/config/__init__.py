@@ -12,7 +12,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if DEVICE == torch.device("cuda"):
   torch.set_float32_matmul_precision("high")
 
-EPISODES: int = 3_000
+EPISODES: int = 1_000
 
 LEARNING_RATE: float = 0.001
 GAMMA: float = 0.95
@@ -50,17 +50,17 @@ COMPILE_MODE: str = "reduce-overhead"
 TARGET_UPDATE: int = 1000
 
 EPSILON_START: float = 0.1
-EPSILON_END: float = 0.01
-EPSILON_DECAY: float = 0.999
+EPSILON_END: float = 0.0001
+EPSILON_DECAY: float = 0.0381
 
-MAX_STEPS: int = 10_000
+MAX_STEPS: int = 50_000
 
 MODEL_PATH: str = "models/snake_fly_dqn.pt"
 CHECKPOINT_PATH: str = "models/snake_fly_checkpoint.pt"
 
 PRINT_EVERY: int = 5
 
-SPEED_PLAY: int = 50
+SPEED_PLAY: int = 100
 
 # Reward settings
 REWARD_FOOD: float = 10.0
@@ -70,6 +70,10 @@ REWARD_STEP: float = -0.02
 REWARD_CLOSER_FOOD: float = 0.1
 REWARD_FARTHER_FOOD: float = -0.1
 
+
+SAFETY_NET_ENABLED = True
+STUCK_STEPS = 300
+MAX_STEPS_PLAY = 100_000
 
 def to_string():
   print(f"""
@@ -105,4 +109,7 @@ def to_string():
   REWARD_CLOSER_FOOD: float = {REWARD_CLOSER_FOOD}
   REWARD_FARTHER_FOOD: float = {REWARD_FARTHER_FOOD}
   PARALLEL_ENVIRONMENTS: int = {PARALLEL_ENVIRONMENTS}
+  SAFETY_NET_ENABLED: int = {SAFETY_NET_ENABLED}
+  STUCK_STEPS: int = {STUCK_STEPS}
+  MAX_STEPS_PLAY: int = {MAX_STEPS_PLAY}
   """)
